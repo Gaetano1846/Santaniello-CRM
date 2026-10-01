@@ -100,17 +100,22 @@ function GlobalSearch() {
   const [res, setRes] = useState(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
   const box = useRef(null);
   const input = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!q.trim()) { setRes(null); return; }
+    if (!q.trim()) { setRes(null); setLoading(false); return; }
+    let stale = false;
     setLoading(true);
     const t = setTimeout(async () => {
-      try { setRes(await api(`/search?q=${encodeURIComponent(q)}`)); setOpen(true); } finally { setLoading(false); }
+      try {
+        const r = await api(`/search?q=${encodeURIComponent(q)}`);
+        if (!stale) { setRes(r); setOpen(true); }
+      } finally { if (!stale) setLoading(false); }
     }, 350);
-    return () => clearTimeout(t);
+    return () => { stale = true; clearTimeout(t); };
   }, [q]);
 
   useEffect(() => {
@@ -133,12 +138,13 @@ function GlobalSearch() {
         placeholder="Cerca clienti e consulenze…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        onFocus={() => res && setOpen(true)}
+        onFocus={() => { setFocused(true); if (res) setOpen(true); }}
+        onBlur={() => setFocused(false)}
         onKeyDown={(e) => e.key === 'Escape' && (setQ(''), setOpen(false))}
         aria-label="Ricerca globale"
       />
       <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}>
-        {loading ? <span className="spinner" style={{ width: 14, height: 14, display: 'block' }} />
+        {loading && focused ? <span className="spinner" style={{ width: 14, height: 14, display: 'block' }} />
           : q ? <X size={15} className="faint" style={{ cursor: 'pointer' }} onClick={() => { setQ(''); setOpen(false); }} />
           : <span className="kbd">Ctrl K</span>}
       </span>
