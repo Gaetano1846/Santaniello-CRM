@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import {
-  Briefcase, CalendarDays, FileText, FolderOpen, LogOut, Mail, Menu as MenuIcon, Moon,
-  Phone, ScrollText, Search, Sun, User, UserRound, Users, X,
+  Briefcase, CalendarDays, FileText, FolderOpen, LogOut, Mail, Menu as MenuIcon,
+  Phone, ScrollText, Search, User, UserRound, Users, X,
 } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { useAuth, useInvalidate } from '../lib/hooks.js';
@@ -31,23 +31,10 @@ export function Brand() {
   );
 }
 
-function useTheme() {
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme
-    || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
-  const toggle = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    try { localStorage.setItem('crm-theme', next); } catch { /* storage non disponibile */ }
-    setTheme(next);
-  };
-  return [theme, toggle];
-}
-
 export function Layout() {
   const [navOpen, setNavOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const { user, logout } = useAuth();
-  const [theme, toggleTheme] = useTheme();
   const location = useLocation();
 
   useEffect(() => { setNavOpen(false); }, [location.pathname]);
@@ -88,7 +75,6 @@ export function Layout() {
           <IconButton className="menu-btn" icon={MenuIcon} label="Apri menu" onClick={() => setNavOpen(true)} />
           <GlobalSearch />
           <div className="grow" />
-          <IconButton icon={theme === 'dark' ? Sun : Moon} label="Cambia tema" onClick={toggleTheme} />
           <button className="icon-btn" onClick={() => setAccountOpen(true)} aria-label="Account" title="Account">
             <Avatar name={user.display_name || user.email} size="sm" />
           </button>

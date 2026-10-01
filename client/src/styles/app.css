@@ -84,49 +84,6 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #1a1a18; --bg-sunken: #141413; --surface: #212120; --surface-2: #282826; --surface-hover: #2e2e2b;
-    --border: #34332f; --border-strong: #4e4c46;
-    --text: #ecebe6; --text-2: #b2afa7; --text-3: #918e86;
-    --ink: #5faa85; --ink-2: #74bd98; --on-ink: #10241a;
-    --brass: #5faa85; --brass-soft: #1d3329; --brass-text: #96d4b4;
-    --blue: #8fb0d6; --blue-soft: #1f2934; --blue-text: #aec8e6;
-    --green: #5faa85; --green-soft: #1d3329; --green-text: #96d4b4;
-    --amber: #d5a74e; --amber-soft: #332a17; --amber-text: #e8c583;
-    --red: #e08a83; --red-soft: #3a211f; --red-text: #f0aca6;
-    --violet: #b79bc4; --violet-soft: #2c2430; --violet-text: #cdb6d8;
-    --on-danger: #2b100e;
-    --area-civile: #8fb0d6; --area-penale: #dd9089; --area-commerciale: #cdb265; --area-lavoro: #d09a72;
-    --area-famiglia: #b79bc4; --area-tributario: #6fb5b5; --area-ip: #94a0e0; --area-immobiliare: #c1a575; --area-altro: #a5a29a;
-    --scrim: #0b0b0acc;
-    --glass: rgba(26, 26, 24, .88);
-    --shadow-lg: 0 18px 44px -20px rgba(0, 0, 0, .85);
-    --ring: 0 0 0 2px #212120, 0 0 0 4px #5faa85;
-    color-scheme: dark;
-  }
-}
-:root[data-theme='dark'] {
-  --bg: #1a1a18; --bg-sunken: #141413; --surface: #212120; --surface-2: #282826; --surface-hover: #2e2e2b;
-  --border: #34332f; --border-strong: #4e4c46;
-  --text: #ecebe6; --text-2: #b2afa7; --text-3: #918e86;
-  --ink: #5faa85; --ink-2: #74bd98; --on-ink: #10241a;
-  --brass: #5faa85; --brass-soft: #1d3329; --brass-text: #96d4b4;
-  --blue: #8fb0d6; --blue-soft: #1f2934; --blue-text: #aec8e6;
-  --green: #5faa85; --green-soft: #1d3329; --green-text: #96d4b4;
-  --amber: #d5a74e; --amber-soft: #332a17; --amber-text: #e8c583;
-  --red: #e08a83; --red-soft: #3a211f; --red-text: #f0aca6;
-  --violet: #b79bc4; --violet-soft: #2c2430; --violet-text: #cdb6d8;
-  --on-danger: #2b100e;
-  --area-civile: #8fb0d6; --area-penale: #dd9089; --area-commerciale: #cdb265; --area-lavoro: #d09a72;
-  --area-famiglia: #b79bc4; --area-tributario: #6fb5b5; --area-ip: #94a0e0; --area-immobiliare: #c1a575; --area-altro: #a5a29a;
-  --scrim: #0b0b0acc;
-  --glass: rgba(26, 26, 24, .88);
-  --shadow-lg: 0 18px 44px -20px rgba(0, 0, 0, .85);
-  --ring: 0 0 0 2px #212120, 0 0 0 4px #5faa85;
-  color-scheme: dark;
-}
-
 /* ----------------------------------------------------------------- base */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
