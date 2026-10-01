@@ -351,14 +351,11 @@ function EventDetails({ event, open, onClose, consulenzaDoc }) {
         <div className="stack" style={{ gap: 12 }}>
           <span className={`badge ${appt ? 'blue' : 'amber'}`} style={{ alignSelf: 'flex-start' }}>{appt ? 'Appuntamento' : 'Promemoria'}</span>
           <div className="contact-line"><Clock size={15} /> <span style={{ textTransform: 'capitalize' }}>{fmtLong(event.date)}</span> · <b className="tnum">{fmtTime(event.date)}</b></div>
-          {appt ? (
-            <div className="contact-line"><MapPin size={15} /> {event.doc.Luogo || <span className="faint">Luogo non indicato</span>}</div>
-          ) : (
-            <div>
-              <div className="kv-label">Descrizione</div>
-              <div className="kv-value">{event.doc.Descrizione || <span className="faint">Nessuna descrizione</span>}</div>
-            </div>
-          )}
+          {appt && <div className="contact-line"><MapPin size={15} /> {event.doc.Luogo || <span className="faint">Luogo non indicato</span>}</div>}
+          <div>
+            <div className="kv-label">Descrizione</div>
+            <div className="kv-value">{event.doc.Descrizione || <span className="faint">Nessuna descrizione</span>}</div>
+          </div>
         </div>
       </Modal>
       {appt

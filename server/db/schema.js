@@ -72,7 +72,7 @@ export const schema = {
     dates: ['Data_Creazione'],
   },
   Appuntamenti: {
-    fields: ['Titolo', 'Data_Creazione', 'Data_Appuntamento', 'Ora_Appuntamento', 'Luogo', 'Utente', 'Consulenza_Ref'],
+    fields: ['Titolo', 'Descrizione', 'Data_Creazione', 'Data_Appuntamento', 'Ora_Appuntamento', 'Luogo', 'Utente', 'Consulenza_Ref'],
     refs: ['Utente', 'Consulenza_Ref'],
     refLists: [],
     dates: ['Data_Creazione'],

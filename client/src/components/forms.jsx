@@ -282,13 +282,14 @@ export function AppuntamentoDialog({ open, onClose, consulenza, appuntamento, da
   const [f, bind, set] = useForm(open, () => ({
     Titolo: appuntamento?.Titolo ?? '',
     Luogo: appuntamento?.Luogo ?? '',
+    Descrizione: appuntamento?.Descrizione ?? '',
     Data_Appuntamento: appuntamento?.Data_Appuntamento ?? date ?? '',
     Ora_Appuntamento: appuntamento?.Ora_Appuntamento ?? '',
     Consulenza_Ref: appuntamento?.Consulenza_Ref ?? consulenza?.path ?? null,
   }));
 
   const save = useAction(async () => {
-    const data = { Titolo: f.Titolo, Data_Appuntamento: f.Data_Appuntamento, Ora_Appuntamento: f.Ora_Appuntamento, Luogo: f.Luogo };
+    const data = { Titolo: f.Titolo, Descrizione: f.Descrizione, Data_Appuntamento: f.Data_Appuntamento, Ora_Appuntamento: f.Ora_Appuntamento, Luogo: f.Luogo };
     if (editing) {
       await db.update(appuntamento.path, { ...data, ...(consulenza ? {} : { Consulenza_Ref: f.Consulenza_Ref ?? null }) });
       return;
@@ -310,6 +311,7 @@ export function AppuntamentoDialog({ open, onClose, consulenza, appuntamento, da
     <FormModal open={open} onClose={onClose} title={editing ? 'Modifica appuntamento' : 'Nuovo appuntamento'} icon={editing ? Pencil : CalendarPlus} onSubmit={() => save.mutate()} busy={save.isPending}>
       <Field required label="Titolo"><Input icon={Tag} {...bind('Titolo')} required autoFocus /></Field>
       <Field label="Luogo"><Input icon={MapPin} {...bind('Luogo')} /></Field>
+      <Field label="Descrizione"><Textarea rows={4} {...bind('Descrizione')} placeholder="Descrivi l'appuntamento" /></Field>
       {!consulenza && (
         <Field label="Consulenza"><EntityPicker col="Consulenze" value={f.Consulenza_Ref} onChange={set('Consulenza_Ref')} placeholder="Seleziona consulenza" searchPlaceholder="Cerca consulenza…" /></Field>
       )}

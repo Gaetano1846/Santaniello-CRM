@@ -56,7 +56,7 @@ const T = {
   },
   Appuntamenti: {
     table: 'appuntamenti',
-    cols: { Titolo: 'titolo', Data_Creazione: 'data_creazione', Data_Appuntamento: 'data_appuntamento', Ora_Appuntamento: 'ora_appuntamento', Luogo: 'luogo', Utente: 'utente', Consulenza_Ref: 'consulenza_ref' },
+    cols: { Titolo: 'titolo', Descrizione: 'descrizione', Data_Creazione: 'data_creazione', Data_Appuntamento: 'data_appuntamento', Ora_Appuntamento: 'ora_appuntamento', Luogo: 'luogo', Utente: 'utente', Consulenza_Ref: 'consulenza_ref' },
     refs: { Utente: 'Users', Consulenza_Ref: 'Consulenze' },
   },
 };

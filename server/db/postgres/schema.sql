@@ -136,6 +136,8 @@ CREATE TABLE IF NOT EXISTS appuntamenti (
   utente             text REFERENCES users(id) ON DELETE SET NULL,
   consulenza_ref     text REFERENCES consulenze(id) ON DELETE SET NULL
 );
+-- aggiunta dopo la prima versione: i database già creati ricevono la colonna all'avvio
+ALTER TABLE appuntamenti ADD COLUMN IF NOT EXISTS descrizione text;
 
 -- Indici per le query usate dall'app (equivalenti a firestore.indexes.json)
 CREATE INDEX IF NOT EXISTS contatti_cliente_idx      ON contatti (cliente_id);
