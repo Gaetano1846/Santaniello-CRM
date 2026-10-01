@@ -1,0 +1,42 @@
+{
+  "name": "santaniello-crm",
+  "version": "2.0.0",
+  "description": "Santaniello CRM — gestionale per studio legale (Node.js 22 + React + PostgreSQL). Porting della app FlutterFlow originale.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --watch-path=server --env-file-if-exists=.env server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "seed": "node --env-file-if-exists=.env server/db/seed.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "db:import": "node --env-file-if-exists=.env server/db/import.js",
+    "db:migrate": "node --env-file-if-exists=.env -e \"import('./server/db/index.js').then(m=>m.getDb()).then(d=>{console.log('Schema applicato ('+d.kind+')');return d.close?.()})\""
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.0",
+    "compression": "^1.7.5",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.0.1",
+    "firebase-admin": "^13.0.1",
+    "helmet": "^8.0.0",
+    "lucide-react": "^0.468.0",
+    "multer": "^2.0.0",
+    "pg": "^8.23.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-socket": "^0.2.11",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "vite": "^6.0.5"
+  }
+}
