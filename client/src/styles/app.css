@@ -220,7 +220,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 500; }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
-@media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .split { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .split { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
 
 /* indicatori */
@@ -340,13 +340,16 @@ h1, h2, h3, h4 { margin: 0; font-weight: 500; }
 .table .actions { width: 1%; white-space: nowrap; text-align: right; }
 .cell-name { font-weight: 600; }
 .cell-meta { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+/* su telefono ogni riga diventa una scheda: celle impilate, azioni in alto a destra */
 @media (max-width: 760px) {
+  .table.responsive, .table.responsive tbody { display: block; }
   .table.responsive thead { display: none; }
-  .table.responsive tr { display: grid; grid-template-columns: 1fr auto; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .table.responsive tr { display: block; position: relative; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .table.responsive tr:has(> td.actions) { padding-right: 56px; }
   .table.responsive tr:last-child { border-bottom: 0; }
-  .table.responsive td { padding: 2px 0; border: 0; }
+  .table.responsive td { display: block; padding: 2px 0; border: 0; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
   .table.responsive td.hide-sm { display: none; }
-  .table.responsive td.actions { grid-row: 1 / span 3; grid-column: 2; align-self: center; }
+  .table.responsive td.actions { position: absolute; top: 8px; right: 8px; width: auto; padding: 0; }
 }
 
 /* ------------------------------------------------------------ list items */
@@ -580,6 +583,14 @@ a.badge:hover { background: var(--surface-hover); }
 .agenda-time { width: 44px; flex: none; font-family: var(--font-mono); font-size: 12.5px; font-weight: 500; color: var(--text-2); }
 .agenda-bar { width: var(--stroke-mark); min-height: 30px; align-self: stretch; border-radius: 0; flex: none; background: var(--text); }
 .agenda-bar.memo { background: none; border-left: var(--stroke-mark) dashed var(--amber); }
+.week-day { border-bottom: 1px solid var(--border); }
+.week-day:last-child { border-bottom: 0; }
+.week-day-head {
+  display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 10px 12px;
+  border: 0; background: var(--surface-2); cursor: pointer; text-align: left;
+}
+.week-day-head .tnum { font-size: 16px; color: var(--text); }
+.week-day-head.today .kicker, .week-day-head.today .tnum { color: var(--brass-text); }
 
 /* ------------------------------------------------------------------ misc */
 .contact-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -634,4 +645,120 @@ a.badge:hover { background: var(--surface-hover); }
   .stats .stat-icon { width: 28px; height: 28px; }
   .stats .stat-value { font-size: 21px; }
   .stats .stat-label { font-size: 11.5px; line-height: 1.3; }
+}
+
+/* =====================================================================
+   Versione mobile: stesse funzioni, spazi e misure adatti al telefono
+   ===================================================================== */
+.tabbar { display: none; }
+
+/* schermi touch: bersagli più grandi */
+@media (pointer: coarse) {
+  :root {
+    --control-h: 42px;
+    --button-h: 40px;
+    --button-h-sm: 34px;
+    --button-h-cta: 48px;
+    --icon-button: 40px;
+    --icon-button-sm: 36px;
+  }
+  .menu-item { padding: 11px 10px; font-size: 14px; }
+  .check { padding: 10px 8px; }
+  .check input { width: 18px; height: 18px; }
+  .chip { height: 34px; }
+  .segmented button { padding: 8px 14px; }
+  .path button, .path .current { padding: 8px 6px; }
+  .kbd { display: none; }
+}
+
+@media (max-width: 760px) {
+  :root { --tabbar-h: 60px; --topbar-h: 52px; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { overscroll-behavior-y: none; }
+
+  /* iOS ingrandisce la pagina sui campi sotto i 16px */
+  .input, .select, .textarea, .topbar .search-box .input { font-size: 16px; }
+  .filter-search .input, .filter-select .select { height: var(--control-h) !important; }
+
+  /* barra superiore: ricerca a tutta larghezza, niente hamburger (c'è "Altro" in basso) */
+  .topbar { padding: 0 12px; padding-top: env(safe-area-inset-top); height: calc(var(--topbar-h) + env(safe-area-inset-top)); }
+  .topbar .grow { display: none; }
+  .topbar .search-box { max-width: none; flex: 1; }
+  .topbar .search-box .input { height: 38px; }
+  .icon-btn.menu-btn { display: none; }
+  .kbd { display: none; }
+
+  .content { padding: 14px 12px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom)); }
+
+  /* barra di navigazione in basso */
+  .tabbar {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--glass); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+  }
+  .tabbar-item {
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    border: 0; background: none; cursor: pointer; padding: 0 2px; min-width: 0;
+    font-size: 10.5px; font-weight: 600; color: var(--text-3);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tabbar-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tabbar-item.active { color: var(--ink); }
+  .tabbar-item.active::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 28px; height: var(--stroke-mark); background: var(--ink); border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+  }
+  .sidebar { padding-top: calc(16px + env(safe-area-inset-top)); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .sidebar .nav-item { padding-top: 12px; padding-bottom: 12px; font-size: 15px; }
+
+  /* intestazione di pagina: azioni a tutta larghezza */
+  .page-head { margin-bottom: 14px; gap: 12px; }
+  .page-head > .row:last-child { width: 100%; }
+  .page-head > .row:last-child > .btn,
+  .page-head > .row:last-child > span > .btn { flex: 1 1 auto; }
+  .crumbs { font-size: 12px; margin-bottom: 8px; }
+
+  /* intestazione delle schede: i filtri vanno sotto il titolo, a tutta larghezza */
+  .card-head { padding: 12px; }
+  .card-head > .grow { flex: 1 1 180px; }
+  .card-head:has(> .btn) > .grow { flex-basis: 100%; }
+  .card-head > .btn { flex: 1 1 auto; }
+  .card-head > .row { flex: 1 1 auto; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+  .card-head > .row > .filter-search, .card-head > .row > .filter-select { width: auto !important; flex: 1 1 100%; max-width: none; }
+  .card-pad { padding: 14px; }
+  .cal-head > .grow { display: none; }
+  .cal-head > .row { flex: 1 1 100%; justify-content: flex-start; }
+  .cal-head .segmented { flex: 1; }
+  .cal-head .segmented button { flex: 1; }
+
+  /* tab di dettaglio scorrevoli con bordo morbido a destra */
+  .tabs { gap: 18px; margin-bottom: 14px; mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent); padding-right: 24px; }
+  .tab { padding: 12px 0; }
+
+  /* dialog a foglio dal basso, rispettando la barra di sistema */
+  .modal { max-height: calc(100dvh - 24px); }
+  .modal-head { padding: 12px 14px; }
+  .modal-body { padding: 16px 14px; }
+  .modal-foot { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
+  .modal-foot .btn { flex: 1; }
+
+  /* menu contestuali più comodi */
+  .popover { max-width: calc(100vw - 16px); }
+
+  .toasts { bottom: calc(var(--tabbar-h) + 12px + env(safe-area-inset-bottom)); }
+
+  .hero { padding: 6px 0 14px; margin-bottom: 14px; }
+  .hero .row-between > .row { width: 100%; }
+  .hero .row-between > .row > .btn { flex: 1 1 auto; }
+  .list-item { padding: 11px 12px; }
+  .agenda-item, .agenda-item.list-item { padding: 12px !important; }
+  .agenda-item .badge { display: none; }
+  .timeline { padding: 14px; }
+  .explorer-bar { padding: 6px 12px; }
+  .kv { gap: 14px; }
+  .kv-value { overflow-wrap: anywhere; }
+  .contact-line { overflow-wrap: anywhere; }
 }

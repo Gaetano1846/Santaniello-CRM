@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlarmClock, CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Clock, MapPin, Pencil,
   StickyNote, Trash2,
@@ -82,7 +82,7 @@ export function CalendarView({ user, consulenza, consulenzaDoc, title }) {
   return (
     <>
       <Card>
-        <div className="card-head" style={{ flexWrap: 'wrap' }}>
+        <div className="card-head cal-head" style={{ flexWrap: 'wrap' }}>
           <div className="row" style={{ gap: 6 }}>
             <Button size="sm" onClick={today}>Oggi</Button>
             <IconButton size="sm" bordered icon={ChevronLeft} label="Precedente" onClick={() => move(-1)} />
@@ -193,9 +193,46 @@ function MonthGrid({ cursor, byDay, selected, onSelect, onOpen, onDayView }) {
   );
 }
 
+/** true sotto la larghezza indicata (si aggiorna ruotando il telefono) */
+function useNarrow(px = 760) {
+  const query = `(max-width: ${px}px)`;
+  const [narrow, setNarrow] = useState(() => matchMedia(query).matches);
+  useEffect(() => {
+    const m = matchMedia(query);
+    const h = () => setNarrow(m.matches);
+    m.addEventListener('change', h);
+    return () => m.removeEventListener('change', h);
+  }, [query]);
+  return narrow;
+}
+
 function WeekGrid({ cursor, byDay, onOpen, onSelect }) {
   const start = startOfWeek(cursor);
   const now = new Date();
+  const narrow = useNarrow();
+
+  // su telefono la settimana diventa un'agenda verticale, un giorno sotto l'altro
+  if (narrow) {
+    return (
+      <div>
+        {Array.from({ length: 7 }, (_, i) => {
+          const d = addDays(start, i);
+          const evs = byDay.get(dayKey(d)) ?? [];
+          return (
+            <div key={i} className="week-day">
+              <button type="button" className={`week-day-head ${sameDay(d, now) ? 'today' : ''}`} onClick={() => onSelect(d)}>
+                <span className="kicker">{GIORNI[i]}</span>
+                <span className="tnum">{d.getDate()}</span>
+                <span className="faint small grow" style={{ textAlign: 'right' }}>{evs.length ? `${evs.length} event${evs.length === 1 ? 'o' : 'i'}` : 'Libero'}</span>
+              </button>
+              {evs.map((e) => <AgendaRow key={e.id} e={e} onOpen={onOpen} />)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="table-wrap">
       <div className="cal" style={{ minWidth: 760 }}>

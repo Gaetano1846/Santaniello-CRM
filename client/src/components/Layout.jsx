@@ -19,6 +19,14 @@ const NAV = [
   { to: '/log', label: 'Log Attività', icon: ScrollText },
 ];
 
+/* Barra in basso su telefono: le sezioni principali; il resto è nel menu laterale */
+const TABBAR = [
+  { to: '/calendario', label: 'Calendario', icon: CalendarDays },
+  { to: '/clienti', label: 'Clienti', icon: Users },
+  { to: '/consulenze', label: 'Consulenze', icon: FileText },
+  { to: '/casi', label: 'Casi', icon: Briefcase },
+];
+
 export function Brand() {
   return (
     <div className="brand">
@@ -83,6 +91,21 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <nav className="tabbar" aria-label="Sezioni">
+        {TABBAR.map(({ to, label, icon: Icon }) => (
+          <NavLink key={to} to={to} className={({ isActive }) => `tabbar-item ${isActive ? 'active' : ''}`}>
+            <Icon size={20} strokeWidth={1.9} /><span>{label}</span>
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          className={`tabbar-item ${navOpen || TABBAR.every((t) => !location.pathname.startsWith(t.to)) ? 'active' : ''}`}
+          onClick={() => setNavOpen(true)}
+        >
+          <MenuIcon size={20} strokeWidth={1.9} /><span>Altro</span>
+        </button>
+      </nav>
 
       <AccountDialog open={accountOpen} onClose={() => setAccountOpen(false)} />
     </div>

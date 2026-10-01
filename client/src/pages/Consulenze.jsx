@@ -37,11 +37,11 @@ export default function Consulenze() {
       />
       <Card>
         <CardHead icon={FileText} title="Consulenze" sub={`${rows.length} di ${q.data?.length ?? 0} consulenze`}>
-          <div className="search-box" style={{ width: 260 }}>
+          <div className="search-box filter-search" style={{ width: 260 }}>
             <Search size={15} />
             <input className="input" style={{ height: 36 }} placeholder="Cerca per titolo o descrizione…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <div style={{ width: 210 }}><EntityPicker col="Clienti" value={cliente} onChange={setCliente} placeholder="Tutti i clienti" /></div>
+          <div className="filter-select" style={{ width: 210 }}><EntityPicker col="Clienti" value={cliente} onChange={setCliente} placeholder="Tutti i clienti" /></div>
           {(search || cliente) && <IconButton icon={RotateCcw} label="Azzera filtri" onClick={() => { setSearch(''); setCliente(null); }} />}
         </CardHead>
         {q.isLoading ? <SkeletonRows rows={6} /> : rows.length === 0 ? (

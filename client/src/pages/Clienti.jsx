@@ -37,11 +37,11 @@ export default function Clienti() {
 
       <Card>
         <CardHead icon={Users} title="Rubrica clienti" sub={`${rows.length} di ${q.data?.length ?? 0} clienti`}>
-          <div className="search-box" style={{ width: 260 }}>
+          <div className="search-box filter-search" style={{ width: 260 }}>
             <Search size={15} />
             <input className="input" style={{ height: 36 }} placeholder="Cerca nome, P. IVA, email…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <div style={{ width: 190 }}><Select options={CATEGORIE_CLIENTE} value={cat} onChange={setCat} placeholder="Tutte le categorie" style={{ height: 36 }} /></div>
+          <div className="filter-select" style={{ width: 190 }}><Select options={CATEGORIE_CLIENTE} value={cat} onChange={setCat} placeholder="Tutte le categorie" style={{ height: 36 }} /></div>
           {(search || cat) && <IconButton icon={RotateCcw} label="Azzera filtri" onClick={() => { setSearch(''); setCat(null); }} />}
         </CardHead>
 

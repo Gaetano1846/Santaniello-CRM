@@ -38,11 +38,11 @@ export default function Casi() {
       />
       <Card>
         <CardHead icon={Briefcase} title="Elenco casi" sub={`${rows.length} di ${q.data?.length ?? 0} casi`}>
-          <div className="search-box" style={{ width: 240 }}>
+          <div className="search-box filter-search" style={{ width: 240 }}>
             <Search size={15} />
             <input className="input" style={{ height: 36 }} placeholder="Cerca per titolo…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <div style={{ width: 200 }}><Select options={AREE_PRATICA} value={area} onChange={setArea} placeholder="Tutte le aree" style={{ height: 36 }} /></div>
+          <div className="filter-select" style={{ width: 200 }}><Select options={AREE_PRATICA} value={area} onChange={setArea} placeholder="Tutte le aree" style={{ height: 36 }} /></div>
           {(search || area) && <IconButton icon={RotateCcw} label="Azzera filtri" onClick={() => { setSearch(''); setArea(null); }} />}
         </CardHead>
         {q.isLoading ? <SkeletonRows rows={6} /> : rows.length === 0 ? (
