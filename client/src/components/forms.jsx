@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
   Briefcase, CalendarDays, CalendarPlus, Clock, FileText, Folder, Hash,
-  Home, Mail, MapPin, Pencil, Phone, StickyNote, Tag, UserPlus, UserRound,
+  Home, Mail, MapPin, Pencil, Phone, Plus, StickyNote, Tag, UserPlus, UserRound,
 } from 'lucide-react';
 import { actions, db, useAction, useMe } from '../lib/hooks.js';
 import { logActivity, T } from '../lib/activity.js';
 import { AREE_PRATICA, CATEGORIE_CLIENTE } from '../lib/constants.js';
 import { isoToIt, itToIso } from '../lib/format.js';
-import { Field, FormModal, Input, Select, Textarea } from './ui.jsx';
+import { Field, FormModal, IconButton, Input, Select, Textarea } from './ui.jsx';
 import { EntityPicker, LawyerMultiPicker, useOptions } from './pickers.jsx';
 import { useFeedback } from './feedback.jsx';
 
@@ -157,6 +157,23 @@ export function ConsulenzaDialog({ open, onClose, consulenza, rootFolder, onCrea
   );
 }
 
+/** Selettore consulenza con pulsante + che crea una nuova consulenza e la seleziona */
+function ConsulenzaPicker({ value, onChange }) {
+  const [creating, setCreating] = useState(false);
+  return (
+    <div className="row" style={{ gap: 8 }}>
+      <div className="grow">
+        <EntityPicker col="Consulenze" value={value} onChange={onChange} placeholder="Seleziona consulenza" searchPlaceholder="Cerca consulenza…" />
+      </div>
+      <IconButton icon={Plus} label="Nuova consulenza" bordered style={{ width: 'var(--control-h)', height: 'var(--control-h)' }} onClick={() => setCreating(true)} />
+      {/* il dialog è in un portal ma gli eventi React risalgono comunque: il suo submit non deve arrivare al form che lo contiene */}
+      <span hidden onSubmit={(e) => e.stopPropagation()}>
+        <ConsulenzaDialog open={creating} onClose={() => setCreating(false)} onCreated={(doc) => onChange(doc.path)} />
+      </span>
+    </div>
+  );
+}
+
 /* =================================================================== CASO */
 
 /** CreaCaso / ModificaCaso */
@@ -262,7 +279,7 @@ export function PromemoriaDialog({ open, onClose, consulenza, promemoria, date }
       <Field required label="Titolo"><Input icon={Tag} {...bind('Titolo')} placeholder="Aggiungi titolo" required autoFocus /></Field>
       <Field label="Descrizione"><Textarea rows={4} {...bind('Descrizione')} placeholder="Descrivi il promemoria" /></Field>
       {!consulenza && !editing && (
-        <Field label="Consulenza collegata"><EntityPicker col="Consulenze" value={f.Consulenza_Ref} onChange={set('Consulenza_Ref')} placeholder="Seleziona consulenza" searchPlaceholder="Cerca consulenza…" /></Field>
+        <Field label="Consulenza collegata"><ConsulenzaPicker value={f.Consulenza_Ref} onChange={set('Consulenza_Ref')} /></Field>
       )}
       <div className="form-grid">
         <Field required label="Data"><ItDate value={f.Data_Promemoria} onChange={set('Data_Promemoria')} required /></Field>
@@ -313,7 +330,7 @@ export function AppuntamentoDialog({ open, onClose, consulenza, appuntamento, da
       <Field label="Luogo"><Input icon={MapPin} {...bind('Luogo')} /></Field>
       <Field label="Descrizione"><Textarea rows={4} {...bind('Descrizione')} placeholder="Descrivi l'appuntamento" /></Field>
       {!consulenza && (
-        <Field label="Consulenza"><EntityPicker col="Consulenze" value={f.Consulenza_Ref} onChange={set('Consulenza_Ref')} placeholder="Seleziona consulenza" searchPlaceholder="Cerca consulenza…" /></Field>
+        <Field label="Consulenza"><ConsulenzaPicker value={f.Consulenza_Ref} onChange={set('Consulenza_Ref')} /></Field>
       )}
       <div className="form-grid">
         <Field required label="Data"><ItDate value={f.Data_Appuntamento} onChange={set('Data_Appuntamento')} required /></Field>
