@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { getDb } from '../db/index.js';
-import { uploadFile } from '../services/storage.js';
+import { NOTE_COLLECTIONS } from '../db/schema.js';
+import { deleteStoredFile, uploadFile } from '../services/storage.js';
 import { searchCollection } from '../services/search.js';
 import { calcolaAppuntamentiRecenti } from '../domain/appuntamenti.js';
 import {
@@ -112,6 +113,74 @@ domainRouter.post('/files', upload.array('files'), async (req, res) => {
 domainRouter.delete('/files/:id', async (req, res) => {
   if (!idOk(req.params.id)) return res.status(400).json({ error: 'Id non valido' });
   res.json({ ok: await deleteSingleFile(`Files/${req.params.id}`) });
+});
+
+/* ------------------------------------------------------------ note (clienti, consulenze, casi) */
+
+/** multer decodifica il nome come latin1: riportiamolo a UTF-8 */
+const utf8Name = (f) => Buffer.from(f.originalname, 'latin1').toString('utf8');
+
+async function uploadAllegati(files = []) {
+  const out = [];
+  for (let i = 0; i < files.length; i += 3) {
+    out.push(...await Promise.all(files.slice(i, i + 3).map(async (f) => {
+      const Nome = utf8Name(f);
+      const Tipo = f.mimetype || 'application/octet-stream';
+      const { url } = await uploadFile({ buffer: f.buffer, originalName: Nome, contentType: Tipo });
+      return { Nome, File: url, Tipo, Dimensione: f.size };
+    })));
+  }
+  return out;
+}
+
+/** /note/:col/:id[/:nota] → path della collezione o della nota */
+function notaPath(req) {
+  const { col, id, nota } = req.params;
+  const sub = Object.hasOwn(NOTE_COLLECTIONS, col) ? NOTE_COLLECTIONS[col] : null;
+  if (!sub) throw Object.assign(new Error('Collezione non consentita'), { status: 403 });
+  if (!idOk(id) || (nota !== undefined && !idOk(nota))) throw Object.assign(new Error('Id non valido'), { status: 400 });
+  return nota === undefined ? `${col}/${id}/${sub}` : `${col}/${id}/${sub}/${nota}`;
+}
+
+/** Nuova nota: titolo, descrizione e allegati (immagini o documenti) caricati insieme */
+domainRouter.post('/note/:col/:id', upload.array('files'), async (req, res) => {
+  const col = notaPath(req);
+  const db = await getDb();
+  if (!(await db.get(`${req.params.col}/${req.params.id}`))) return res.status(404).json({ error: 'Documento non trovato' });
+  const Titolo = String(req.body.titolo ?? '').trim();
+  if (!Titolo) return res.status(400).json({ error: 'Il titolo è obbligatorio' });
+  const Allegati = await uploadAllegati(req.files);
+  res.status(201).json(await db.add(col, {
+    Titolo, Descrizione: String(req.body.descrizione ?? ''), Data_Creazione: new Date(), Utente: req.user.ref, Allegati,
+  }));
+});
+
+/** Modifica: "mantieni" = URL degli allegati esistenti da conservare; gli altri vengono eliminati dallo storage */
+domainRouter.patch('/note/:col/:id/:nota', upload.array('files'), async (req, res) => {
+  const p = notaPath(req);
+  const db = await getDb();
+  const cur = await db.get(p);
+  if (!cur) return res.status(404).json({ error: 'Nota non trovata' });
+  const Titolo = String(req.body.titolo ?? '').trim();
+  if (!Titolo) return res.status(400).json({ error: 'Il titolo è obbligatorio' });
+  const keep = new Set(JSON.parse(req.body.mantieni ?? '[]'));
+  const prev = cur.Allegati ?? [];
+  const nuovi = await uploadAllegati(req.files);
+  const doc = await db.update(p, {
+    Titolo, Descrizione: String(req.body.descrizione ?? ''), Allegati: [...prev.filter((a) => keep.has(a.File)), ...nuovi],
+  });
+  await Promise.all(prev.filter((a) => !keep.has(a.File)).map((a) => deleteStoredFile(a.File)));
+  res.json(doc);
+});
+
+domainRouter.delete('/note/:col/:id/:nota', async (req, res) => {
+  const p = notaPath(req);
+  const db = await getDb();
+  const cur = await db.get(p);
+  if (!cur) return res.status(204).end();
+  await db.delete(p);
+  await Promise.all((cur.Allegati ?? []).map((a) => deleteStoredFile(a.File)));
+  res.status(204).end();
 });
 
 /* ------------------------------------------------------------ appuntamenti */

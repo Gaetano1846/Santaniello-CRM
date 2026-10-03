@@ -6,6 +6,16 @@
  * Nel codice server i riferimenti (DocumentReference) sono rappresentati come path stringa
  * ("Clienti/abc") e i timestamp come Date. Gli adapter si occupano della conversione.
  */
+const NOTE = {
+  fields: ['Titolo', 'Descrizione', 'Data_Creazione', 'Utente', 'Allegati'],
+  refs: ['Utente'],
+  refLists: [],
+  dates: ['Data_Creazione'],
+};
+
+/** Collezione padre → sotto-collezione delle note */
+export const NOTE_COLLECTIONS = { Clienti: 'Note_Cliente', Consulenze: 'Note_Consulenza', Casi: 'Note_Caso' };
+
 export const schema = {
   Users: {
     fields: ['email', 'display_name', 'photo_url', 'uid', 'created_time', 'phone_number'],
@@ -27,6 +37,11 @@ export const schema = {
     refLists: [],
     dates: ['Data_Creazione'],
   },
+  // Note con allegati (non presenti nell'app originale), sotto-collezioni di Clienti, Consulenze e Casi.
+  // Allegati: [{ Nome, File (URL di download), Tipo (MIME), Dimensione (byte) }]
+  Note_Cliente: NOTE,
+  Note_Consulenza: NOTE,
+  Note_Caso: NOTE,
   Casi: {
     fields: ['Titolo', 'Cliente', 'Area_Pratica', 'Data_Creazione', 'Avvocato_Principale', 'Avvovati_Supporto', 'Data_Inizio', 'Scadenza', 'Descrizione'],
     refs: ['Cliente', 'Avvocato_Principale'],

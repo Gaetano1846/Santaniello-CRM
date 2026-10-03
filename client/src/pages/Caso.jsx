@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
-  Briefcase, CalendarClock, CalendarDays, FolderOpen, LayoutGrid, ListChecks, Pencil, Tag, Timer,
+  Briefcase, CalendarClock, CalendarDays, FolderOpen, LayoutGrid, ListChecks, NotebookPen, Pencil, Tag, Timer,
   Trash2, UserRound, Users,
 } from 'lucide-react';
 import { actions, db, useAction, useDialog, useDoc, useIndex, useList, useMe, userName } from '../lib/hooks.js';
@@ -13,6 +13,7 @@ import { BackButton, Crumbs, DocState, MissingRoot } from '../components/EntityP
 import { ActivityFeed } from '../components/ActivityFeed.jsx';
 import { ContactsSection } from '../components/Contacts.jsx';
 import { FileExplorer } from '../components/FileExplorer.jsx';
+import { NoteSection, noteCol } from '../components/Note.jsx';
 import { CasoDialog } from '../components/forms.jsx';
 import { useFeedback } from '../components/feedback.jsx';
 
@@ -29,6 +30,7 @@ export default function Caso() {
   const { map: users } = useIndex('Users');
   const { map: clienti } = useIndex('Clienti');
   const contatti = useList(`${ref}/Contatti_Caso`);
+  const note = useList(noteCol(ref));
   // cartella radice: Folder con Caso == caso e Cliente == cliente del caso
   // (senza cliente la cartella non esiste: le sottocartelle del caso non hanno Cliente)
   const root = useList('Folder', { where: [['Caso', '==', ref], ['Cliente', '==', q.data?.Cliente ?? null]], limit: 1 }, { enabled: !!q.data?.Cliente });
@@ -64,6 +66,7 @@ export default function Caso() {
 
       <Tabs value={tab} onChange={setTab} tabs={[
         { value: 'panoramica', label: 'Panoramica', icon: LayoutGrid },
+        { value: 'note', label: 'Note', icon: NotebookPen, count: note.data?.length },
         { value: 'documenti', label: 'Documenti', icon: FolderOpen },
         { value: 'contatti', label: 'Contatti', icon: Users, count: contatti.data?.length },
         { value: 'attivita', label: 'Attività', icon: ListChecks },
@@ -92,6 +95,10 @@ export default function Caso() {
           </Card>
           <ActivityFeed title="Attività recenti" sub="Ultimi 2 giorni" recentDays={2} where={[['Caso', '==', ref]]} compact />
         </div>
+      )}
+
+      {tab === 'note' && (
+        <NoteSection parent={ref} sub="Appunti, documenti e immagini relativi al caso." label={`il caso ${c.Titolo}`} logLink={{ caso: ref, cliente: c.Cliente }} />
       )}
 
       {tab === 'documenti' && (

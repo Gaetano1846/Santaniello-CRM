@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlarmClock, CalendarClock, CalendarDays, Download, FileText, FolderOpen, LayoutGrid, ListChecks,
-  MapPin, Pencil, Plus, StickyNote, Trash2, UserRound, Users,
+  MapPin, NotebookPen, Pencil, Plus, StickyNote, Trash2, UserRound, Users,
 } from 'lucide-react';
 import { actions, db, useAction, useDialog, useDoc, useIndex, useList, useMe, userName } from '../lib/hooks.js';
 import { fileKind, fmtDate, fmtShort, parseItDateTime, toDate } from '../lib/format.js';
@@ -11,6 +11,7 @@ import { Avatar, Badge, Button, Card, CardHead, Empty, IconButton, KV, PageHead,
 import { BackButton, Crumbs, DocState, MissingRoot } from '../components/EntityPage.jsx';
 import { ActivityFeed } from '../components/ActivityFeed.jsx';
 import { FileExplorer } from '../components/FileExplorer.jsx';
+import { NoteSection, noteCol } from '../components/Note.jsx';
 import { CalendarView } from '../components/Calendar.jsx';
 import { PromemoriaDialog } from '../components/forms.jsx';
 import { EditConsulenza } from './Consulenze.jsx';
@@ -29,6 +30,7 @@ export default function Consulenza() {
   const { map: users } = useIndex('Users');
   const { map: clienti } = useIndex('Clienti');
   const root = useList('Folder', { where: [['Consulenza', '==', ref]], limit: 1 });
+  const note = useList(noteCol(ref));
   // promemoria della consulenza assegnati all'utente (l'originale non filtrava per consulenza)
   const prom = useList('Promemoria', { where: [['Consulenza_Ref', '==', ref], ['Utente', '==', me.ref]] });
 
@@ -62,6 +64,7 @@ export default function Consulenza() {
 
       <Tabs value={tab} onChange={setTab} tabs={[
         { value: 'panoramica', label: 'Panoramica', icon: LayoutGrid },
+        { value: 'note', label: 'Note', icon: NotebookPen, count: note.data?.length },
         { value: 'documenti', label: 'Documenti', icon: FolderOpen },
         { value: 'calendario', label: 'Calendario', icon: CalendarDays },
         { value: 'attivita', label: 'Attività', icon: ListChecks },
@@ -102,6 +105,10 @@ export default function Consulenza() {
             </Card>
           </div>
         </div>
+      )}
+
+      {tab === 'note' && (
+        <NoteSection parent={ref} sub="Appunti, documenti e immagini relativi alla consulenza." label={`la consulenza ${c.Titolo}`} logLink={{ consulenza: ref, cliente: c.Cliente }} />
       )}
 
       {tab === 'documenti' && (

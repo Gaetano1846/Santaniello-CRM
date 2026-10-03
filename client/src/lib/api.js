@@ -58,7 +58,23 @@ export const actions = {
     for (const f of files) form.append('files', f, f.name);
     return api('/files', { method: 'POST', form });
   },
+  /** Note con allegati di Clienti, Consulenze e Casi (multipart: titolo, descrizione, files, mantieni) */
+  creaNota: (parent, { titolo, descrizione, files }) => api(`/note/${parent}`, { method: 'POST', form: notaForm({ titolo, descrizione, files }) }),
+  modificaNota: (ref, { titolo, descrizione, files, mantieni }) => api(`/note/${notaUrl(ref)}`, { method: 'PATCH', form: notaForm({ titolo, descrizione, files, mantieni }) }),
+  eliminaNota: (ref) => api(`/note/${notaUrl(ref)}`, { method: 'DELETE' }),
   appuntamentiRecenti: (consulenzaRef) => api(`/consulenze/${consulenzaRef.split('/').pop()}/appuntamenti-recenti`),
 };
+
+/** "Clienti/a/Note_Cliente/b" → "Clienti/a/b" */
+const notaUrl = (ref) => { const [col, id, , nota] = ref.split('/'); return `${col}/${id}/${nota}`; };
+
+function notaForm({ titolo, descrizione, files = [], mantieni }) {
+  const form = new FormData();
+  form.append('titolo', titolo);
+  form.append('descrizione', descrizione ?? '');
+  if (mantieni) form.append('mantieni', JSON.stringify(mantieni));
+  for (const f of files) form.append('files', f, f.name);
+  return form;
+}
 
 export const idOf = (ref) => (ref ? String(ref).split('/').pop() : '');

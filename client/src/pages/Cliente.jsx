@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Briefcase, FileText, FolderOpen, Hash, Home, LayoutGrid, ListChecks, Mail, NotebookText, Pencil,
+  Briefcase, FileText, FolderOpen, Hash, Home, LayoutGrid, ListChecks, Mail, NotebookPen, NotebookText, Pencil,
   Phone, Tag, Trash2, UserRound, Users,
 } from 'lucide-react';
 import { actions, db, useAction, useDialog, useDoc, useList, useMe } from '../lib/hooks.js';
@@ -13,10 +13,11 @@ import { BackButton, Crumbs, DocState, MissingRoot } from '../components/EntityP
 import { ActivityFeed } from '../components/ActivityFeed.jsx';
 import { ContactsSection } from '../components/Contacts.jsx';
 import { FileExplorer } from '../components/FileExplorer.jsx';
+import { NoteSection, noteCol } from '../components/Note.jsx';
 import { ClienteDialog } from '../components/forms.jsx';
 import { useFeedback } from '../components/feedback.jsx';
 
-/** Pagina Cliente: Panoramica, Documenti, Contatti, Attività */
+/** Pagina Cliente: Panoramica, Note, Documenti, Contatti, Attività */
 export default function Cliente() {
   const { id } = useParams();
   const ref = `Clienti/${id}`;
@@ -27,6 +28,7 @@ export default function Cliente() {
   const navigate = useNavigate();
   const { confirm, toast } = useFeedback();
   const contatti = useList(`${ref}/Contatti`);
+  const note = useList(noteCol(ref));
 
   const del = useAction(() => db.remove(ref), { onSuccess: () => { toast('Cliente eliminato'); navigate('/clienti'); } });
 
@@ -56,6 +58,7 @@ export default function Cliente() {
 
       <Tabs value={tab} onChange={setTab} tabs={[
         { value: 'panoramica', label: 'Panoramica', icon: LayoutGrid },
+        { value: 'note', label: 'Note', icon: NotebookPen, count: note.data?.length },
         { value: 'documenti', label: 'Documenti', icon: FolderOpen },
         { value: 'contatti', label: 'Contatti', icon: Users, count: contatti.data?.length },
         { value: 'attivita', label: 'Attività', icon: ListChecks },
@@ -80,6 +83,10 @@ export default function Cliente() {
           </div>
           <ActivityFeed title="Attività recenti" sub="Ultimi 2 giorni" recentDays={2} where={[['Utente', '==', me.ref], ['Cliente', '==', ref]]} compact />
         </div>
+      )}
+
+      {tab === 'note' && (
+        <NoteSection parent={ref} sub="Appunti, documenti e immagini relativi al cliente." label={`il cliente ${c.Nome}`} logLink={{ cliente: ref }} />
       )}
 
       {tab === 'documenti' && <ClienteDocs cliente={c} />}

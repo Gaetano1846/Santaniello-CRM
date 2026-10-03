@@ -88,3 +88,10 @@ export function fileKind(name) {
   if (['xls', 'xlsx', 'csv', 'ods', 'numbers'].includes(ext)) return 'xls';
   return 'other';
 }
+
+export function fmtSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 ** 2).toFixed(1).replace('.', ',')} MB`;
+}

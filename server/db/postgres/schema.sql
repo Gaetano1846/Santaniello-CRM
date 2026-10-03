@@ -139,8 +139,43 @@ CREATE TABLE IF NOT EXISTS appuntamenti (
 -- aggiunta dopo la prima versione: i database già creati ricevono la colonna all'avvio
 ALTER TABLE appuntamenti ADD COLUMN IF NOT EXISTS descrizione text;
 
+-- Note con allegati (aggiunte rispetto all'originale):
+-- Clienti/{id}/Note_Cliente, Consulenze/{id}/Note_Consulenza, Casi/{id}/Note_Caso
+CREATE TABLE IF NOT EXISTS note_cliente (
+  id              text PRIMARY KEY,
+  cliente_id      text NOT NULL REFERENCES clienti(id) ON DELETE CASCADE,
+  titolo          text,
+  descrizione     text,
+  data_creazione  timestamptz,
+  utente          text REFERENCES users(id) ON DELETE SET NULL,
+  allegati        jsonb NOT NULL DEFAULT '[]'   -- [{ Nome, File, Tipo, Dimensione }]
+);
+
+CREATE TABLE IF NOT EXISTS note_consulenza (
+  id              text PRIMARY KEY,
+  consulenza_id   text NOT NULL REFERENCES consulenze(id) ON DELETE CASCADE,
+  titolo          text,
+  descrizione     text,
+  data_creazione  timestamptz,
+  utente          text REFERENCES users(id) ON DELETE SET NULL,
+  allegati        jsonb NOT NULL DEFAULT '[]'   -- [{ Nome, File, Tipo, Dimensione }]
+);
+
+CREATE TABLE IF NOT EXISTS note_caso (
+  id              text PRIMARY KEY,
+  caso_id         text NOT NULL REFERENCES casi(id) ON DELETE CASCADE,
+  titolo          text,
+  descrizione     text,
+  data_creazione  timestamptz,
+  utente          text REFERENCES users(id) ON DELETE SET NULL,
+  allegati        jsonb NOT NULL DEFAULT '[]'   -- [{ Nome, File, Tipo, Dimensione }]
+);
+
 -- Indici per le query usate dall'app (equivalenti a firestore.indexes.json)
 CREATE INDEX IF NOT EXISTS contatti_cliente_idx      ON contatti (cliente_id);
+CREATE INDEX IF NOT EXISTS note_cliente_idx          ON note_cliente (cliente_id);
+CREATE INDEX IF NOT EXISTS note_consulenza_idx       ON note_consulenza (consulenza_id);
+CREATE INDEX IF NOT EXISTS note_caso_idx             ON note_caso (caso_id);
 CREATE INDEX IF NOT EXISTS contatti_caso_caso_idx    ON contatti_caso (caso_id);
 CREATE INDEX IF NOT EXISTS consulenze_cliente_idx    ON consulenze (cliente_id);
 CREATE INDEX IF NOT EXISTS consulenze_creazione_idx  ON consulenze (data_creazione DESC);

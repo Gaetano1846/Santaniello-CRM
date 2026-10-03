@@ -13,12 +13,23 @@ import pg from 'pg';
 // bigint (telefono) → Number
 pg.types.setTypeParser(20, (v) => Number(v));
 
+const note = (table, col, fk) => ({
+  table,
+  parent: { col, fk },
+  cols: { Titolo: 'titolo', Descrizione: 'descrizione', Data_Creazione: 'data_creazione', Utente: 'utente', Allegati: 'allegati' },
+  refs: { Utente: 'Users' },
+  jsonCols: { Allegati: true },
+});
+
 /** Collezione → tabella, campo → colonna, riferimenti (collezione di destinazione), sotto-collezioni */
 const T = {
   Users: { table: 'users', cols: { email: 'email', display_name: 'display_name', photo_url: 'photo_url', uid: 'uid', created_time: 'created_time', phone_number: 'phone_number' } },
   _Auth: { table: 'auth_accounts', cols: { email: 'email', hash: 'hash', salt: 'salt' } },
   Clienti: { table: 'clienti', cols: { Nome: 'nome', Partita_IVA: 'partita_iva', Email: 'email', Telefono: 'telefono', indirizzo: 'indirizzo', Caso_Aperto: 'caso_aperto', Categoria: 'categoria', Note: 'note' } },
   Contatti: { table: 'contatti', parent: { col: 'Clienti', fk: 'cliente_id' }, cols: { Nome: 'nome', Email: 'email', Telefono: 'telefono', Data_Creazione: 'data_creazione' } },
+  Note_Cliente: note('note_cliente', 'Clienti', 'cliente_id'),
+  Note_Consulenza: note('note_consulenza', 'Consulenze', 'consulenza_id'),
+  Note_Caso: note('note_caso', 'Casi', 'caso_id'),
   Consulenze: {
     table: 'consulenze',
     cols: { Cliente: 'cliente_id', Titolo: 'titolo', Descrizione: 'descrizione', Avvocato_Principale: 'avvocato_principale', Data_Creazione: 'data_creazione', Data_Inizio: 'data_inizio', Avvocati_Supporto: 'avvocati_supporto' },
@@ -107,6 +118,8 @@ function toRow(spec, data) {
     }
     if (spec.refs?.[field]) row[col] = refToId(value, spec.refs[field], field);
     else if (spec.arrays?.[field]) row[col] = (Array.isArray(value) ? value : []).map((v) => refToId(v, spec.arrays[field], field)).filter(Boolean);
+    // pg serializzerebbe un array JS come array PostgreSQL, non come JSON
+    else if (spec.jsonCols?.[field]) row[col] = JSON.stringify(value ?? []);
     else row[col] = value;
   }
   return row;

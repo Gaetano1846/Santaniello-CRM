@@ -528,6 +528,26 @@ a.badge:hover { background: var(--surface-hover); }
 .file-icon.xls { color: var(--green); }
 .file-icon.other { color: var(--text-2); }
 
+/* note cliente */
+.note-list { display: grid; gap: 12px; padding: 18px; }
+.note-item { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 14px 16px; display: grid; gap: 10px; }
+.note-title { font-weight: 600; font-size: 15px; }
+.note-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.note-thumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.note-thumb { width: 112px; height: 84px; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); display: block; }
+.note-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.note-thumb:hover { border-color: var(--border-strong); }
+.note-file { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); text-decoration: none; min-width: 0; }
+a.note-file:hover { background: var(--surface-hover); }
+.note-drop {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; padding: 18px 12px;
+  border: 1.5px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--surface-2);
+  color: var(--text-2); font: inherit; font-size: 13px; cursor: pointer; transition: background .12s, border-color .12s;
+}
+.note-drop:hover, .note-drop.active { background: var(--surface-hover); border-color: var(--ink); }
+.note-drop svg { color: var(--ink); }
+@media (max-width: 760px) { .note-list { padding: 12px; } .note-thumb { width: calc(50% - 4px); height: 110px; } }
+
 .dropzone-overlay {
   position: absolute; inset: 0; z-index: 5; border-radius: var(--radius-md);
   background: var(--surface); border: 2px dashed var(--ink);
