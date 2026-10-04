@@ -1,0 +1,70 @@
+# Base44 dev environment — Santaniello CRM
+# Runs the Express API (4310) and Vite dev server (5173 → host 3000) in a single
+# container so Vite's proxy to localhost:4310 works. PostgreSQL runs alongside.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: crm_dev_password
+      POSTGRES_DB: santaniello_crm
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d santaniello_crm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: on-failure
+
+  app:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+      - uploads:/app/data/uploads
+    ports:
+      - "3000:5173"
+    environment:
+      - NODE_ENV=development
+      - PORT=4310
+      - DATA_DRIVER=postgres
+      - DATABASE_URL=postgres://postgres:crm_dev_password@postgres:5432/santaniello_crm
+      - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+    command: ["sh", "-ec", "npm install --no-audit --no-fund && exec npm run dev"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "Promise.all([fetch('http://localhost:4310/api/health').then(r=>{if(!r.ok)throw new Error('api '+r.status)}),fetch('http://localhost:5173/').then(r=>{if(!r.ok)throw new Error('vite '+r.status)})]).catch(e=>{console.error(e);process.exit(1)})"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: on-failure
+
+  seed:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+      - uploads:/app/data/uploads
+    environment:
+      - DATA_DRIVER=postgres
+      - DATABASE_URL=postgres://postgres:crm_dev_password@postgres:5432/santaniello_crm
+    command: ["sh", "-ec", "node server/db/seed.js"]
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  pgdata:
+  node_modules:
+  uploads:
