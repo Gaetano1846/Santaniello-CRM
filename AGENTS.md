@@ -5,9 +5,10 @@ Node.js 22 + Express 5 (API on port 4310) + React 19 / Vite 6 (dev server on 517
 Single repo; `npm run dev` uses `concurrently` to start both processes.
 
 ## Running in Base44
-`docker compose -f docker-compose.base44.yml up -d` starts PostgreSQL, the app
-(both API + Vite in one container, Vite mapped to host port 3000), and a one-shot
-seed service that populates demo data on first boot.
+`docker compose -f docker-compose.base44.yml up -d` starts PostgreSQL and the app
+(both API + Vite in one container, Vite mapped to host port 3000). The app startup
+command also runs `node server/db/seed.js` before the dev server — it is idempotent
+(skips if data already exists) so demo data is populated on first boot only.
 
 - PostgreSQL runs as a compose service with generated credentials (not a secret).
 - The app auto-creates the database and applies `server/db/postgres/schema.sql` on
