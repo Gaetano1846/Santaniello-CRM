@@ -59,8 +59,22 @@ export async function uploadFile({ buffer, originalName, contentType }) {
   return { url, storagePath };
 }
 
+/** Contenuto di un file caricato (per l'estrazione del testo) */
+export async function readStoredFile(url) {
+  const storagePath = extractStoragePathFromUrl(url);
+  if (!storagePath) throw new Error('URL del file non valido');
+  const db = await getDb();
+  if (db.kind === 'firestore') {
+    const [buf] = await db.storage().bucket(bucketFromUrl(url) ?? config.firebase.storageBucket).file(storagePath).download();
+    return buf;
+  }
+  const abs = path.resolve(config.uploadsDir, storagePath);
+  if (!abs.startsWith(path.resolve(config.uploadsDir) + path.sep)) throw new Error('Percorso del file non valido');
+  return fs.readFile(abs);
+}
+
 /**
- * Porting di deleteFileFromStorage(): prova URL completo su entrambi i bucket
+ * Porting di deleteFileFromStorage():prova URL completo su entrambi i bucket
  * (con/senza "e"), poi il path estratto, poi "files/<nome>" se il valore è solo un nome.
  * Un file già assente viene considerato un successo (come nell'originale).
  */

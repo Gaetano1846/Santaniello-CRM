@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, ChevronRight, CloudUpload, Download, File, FileImage, FileSpreadsheet, FileText,
   Folder, FolderOpen, FolderPlus, House, MoreHorizontal, Pencil, Trash2, Upload,
@@ -59,6 +60,15 @@ export function FileExplorer({ rootRef, rootLabel = 'Documenti', rootChildren, f
   const folders = (foldersQ.data ?? []).filter((f) => !(rootChildren ?? []).includes(f.path)).sort(byName('Titolo'));
   const files = current ? [...(filesQ.data ?? [])].sort(byName('Nome')) : [];
   const loading = foldersQ.isLoading || (current && filesQ.isLoading);
+
+  // stato della lettura del testo (ricerca per contenuto), aggiornato finché ci sono file in coda
+  const fileRefs = files.map((f) => f.path);
+  const statoQ = useQuery({
+    queryKey: ['documenti-stato', fileRefs.join(',')],
+    queryFn: () => actions.statoDocumenti(fileRefs),
+    enabled: fileRefs.length > 0,
+    refetchInterval: (q) => (Object.values(q.state.data ?? {}).some((x) => x.stato === 'in_attesa') ? 3000 : false),
+  });
 
   /* ------------------------------------------------------------ azioni */
   const { confirm, toast } = useFeedback();
@@ -186,7 +196,7 @@ export function FileExplorer({ rootRef, rootLabel = 'Documenti', rootChildren, f
                 <span className={`file-icon ${kind}`}><Icon size={18} /></span>
                 <div className="grow">
                   <a href={f.File} target="_blank" rel="noopener" className="truncate" style={{ fontWeight: 550, display: 'block' }}>{f.Nome}</a>
-                  <div className="faint small">Caricato il {fmtShort(f.Data_Caricamento)}</div>
+                  <div className="faint small">Caricato il {fmtShort(f.Data_Caricamento)}<IndexBadge s={statoQ.data?.[f.path]} /></div>
                 </div>
                 <IconButton size="sm" icon={Download} label="Scarica" onClick={() => download(f)} />
                 <IconButton size="sm" danger icon={Trash2} label="Elimina" onClick={() => askDeleteFile(f)} />
@@ -210,6 +220,26 @@ export function FileExplorer({ rootRef, rootLabel = 'Documenti', rootChildren, f
       <EditFolderDialog open={editFolder.isOpen} folder={editFolder.data} onClose={editFolder.close} editLinks={editLinks} />
     </Card>
   );
+}
+
+/** Stato della lettura del testo di un file: in corso, non riuscita (con "Riprova") */
+function IndexBadge({ s }) {
+  const qc = useQueryClient();
+  const retry = useAction((url) => actions.reindexDocumento(url), {
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documenti-stato'] }),
+  });
+  if (!s) return null;
+  if (s.stato === 'in_attesa') {
+    return <span className="index-badge" title="Il testo del documento viene letto per renderlo cercabile"><span className="spinner" style={{ width: 10, height: 10 }} />lettura del testo…</span>;
+  }
+  if (s.stato === 'errore') {
+    return (
+      <span className="index-badge err" title={s.errore ?? undefined}>
+        testo non leggibile · <button type="button" onClick={() => retry.mutate(s.url)} disabled={retry.isPending}>Riprova</button>
+      </span>
+    );
+  }
+  return null;
 }
 
 function CrumbButton({ refPath, onClick }) {

@@ -62,6 +62,11 @@ export const actions = {
   creaNota: (parent, { titolo, descrizione, files }) => api(`/note/${parent}`, { method: 'POST', form: notaForm({ titolo, descrizione, files }) }),
   modificaNota: (ref, { titolo, descrizione, files, mantieni }) => api(`/note/${notaUrl(ref)}`, { method: 'PATCH', form: notaForm({ titolo, descrizione, files, mantieni }) }),
   eliminaNota: (ref) => api(`/note/${notaUrl(ref)}`, { method: 'DELETE' }),
+  /** Ricerca nei documenti per contenuto: { results, indexing } */
+  cercaDocumenti: (q, { cliente, limit } = {}) => api(`/documenti/cerca?q=${encodeURIComponent(q)}${cliente ? `&cliente=${encodeURIComponent(cliente)}` : ''}${limit ? `&limit=${limit}` : ''}`),
+  /** Stato dell'indicizzazione: { "Files/id": { url, stato, errore, ocr } } */
+  statoDocumenti: (fileRefs) => api(`/documenti/stato?files=${encodeURIComponent(fileRefs.join(','))}`),
+  reindexDocumento: (url) => api('/documenti/reindex', { method: 'POST', body: { url } }),
   appuntamentiRecenti: (consulenzaRef) => api(`/consulenze/${consulenzaRef.split('/').pop()}/appuntamenti-recenti`),
 };
 

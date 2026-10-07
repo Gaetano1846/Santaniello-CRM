@@ -194,3 +194,53 @@ CREATE INDEX IF NOT EXISTS promemoria_utente_idx     ON promemoria (utente, data
 CREATE INDEX IF NOT EXISTS promemoria_consulenza_idx ON promemoria (consulenza_ref);
 CREATE INDEX IF NOT EXISTS appuntamenti_utente_idx   ON appuntamenti (utente, data_creazione DESC);
 CREATE INDEX IF NOT EXISTS appuntamenti_cons_idx     ON appuntamenti (consulenza_ref);
+
+-- =====================================================================
+-- Ricerca per contenuto nei documenti (aggiunta rispetto all'originale)
+-- Il testo di ogni file (cartelle e allegati delle note) viene estratto in
+-- background (PDF, Word, Excel, OCR di scansioni e immagini) e indicizzato
+-- con la configurazione italiana senza accenti.
+-- =====================================================================
+CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'it_unaccent') THEN
+    CREATE TEXT SEARCH CONFIGURATION it_unaccent (COPY = italian);
+    ALTER TEXT SEARCH CONFIGURATION it_unaccent
+      ALTER MAPPING FOR hword, hword_part, word WITH unaccent, italian_stem;
+  END IF;
+END $$;
+
+-- unaccent() non è IMMUTABLE e non può comparire in un indice: versione con dizionario esplicito
+CREATE OR REPLACE FUNCTION f_unaccent(text) RETURNS text
+  LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
+  AS $$ SELECT public.unaccent('public.unaccent'::regdictionary, $1) $$;
+
+CREATE TABLE IF NOT EXISTS documenti_testo (
+  url                 text PRIMARY KEY,   -- URL nello storage (Files.File o Allegati[].File)
+  nome                text NOT NULL,
+  -- origine: un file delle cartelle oppure l'allegato di una nota (la riga sparisce con lei)
+  file_id             text REFERENCES files(id) ON DELETE CASCADE,
+  nota_cliente_id     text REFERENCES note_cliente(id) ON DELETE CASCADE,
+  nota_consulenza_id  text REFERENCES note_consulenza(id) ON DELETE CASCADE,
+  nota_caso_id        text REFERENCES note_caso(id) ON DELETE CASCADE,
+  stato               text NOT NULL DEFAULT 'in_attesa',  -- in_attesa | indicizzato | errore | non_supportato
+  errore              text,
+  ocr                 boolean NOT NULL DEFAULT false,
+  testo               text,
+  aggiornato          timestamptz NOT NULL DEFAULT now(),
+  -- il nome pesa più del contenuto; "_" "." "-" nei nomi file separano le parole
+  tsv tsvector GENERATED ALWAYS AS (
+    setweight(to_tsvector('public.it_unaccent', regexp_replace(coalesce(nome, ''), '[_.\-]+', ' ', 'g')), 'A') ||
+    setweight(to_tsvector('public.it_unaccent', coalesce(testo, '')), 'B')
+  ) STORED
+);
+
+CREATE INDEX IF NOT EXISTS documenti_testo_tsv_idx    ON documenti_testo USING gin (tsv);
+-- ricerca tollerante agli errori di battitura (similarità per trigrammi)
+CREATE INDEX IF NOT EXISTS documenti_testo_trgm_idx   ON documenti_testo
+  USING gin (f_unaccent(lower(coalesce(nome, '') || ' ' || coalesce(testo, ''))) gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS documenti_testo_stato_idx  ON documenti_testo (stato, aggiornato) WHERE stato = 'in_attesa';
+CREATE INDEX IF NOT EXISTS documenti_testo_file_idx   ON documenti_testo (file_id);

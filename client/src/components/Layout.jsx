@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import {
-  Briefcase, CalendarDays, FileText, FolderOpen, LogOut, Mail, Menu as MenuIcon,
+  Briefcase, CalendarDays, FileSearch, FileText, FolderOpen, LogOut, Mail, Menu as MenuIcon,
   Phone, ScrollText, Search, User, UserRound, Users, X,
 } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { useAuth, useInvalidate } from '../lib/hooks.js';
 import { Avatar, Field, FormModal, IconButton, Input } from './ui.jsx';
 import { useFeedback } from './feedback.jsx';
+import { Highlight } from './DocSearch.jsx';
 
 /* Voci del MenuWidget originale (Casi era nascosto: ora è visibile e raggiungibile) */
 const NAV = [
@@ -115,7 +116,7 @@ export function Layout() {
 /* ---------------------------------------------------------------- ricerca */
 
 /**
- * Ricerca globale della AppBar: Clienti + Consulenze (Algolia lato server).
+ * Ricerca globale della AppBar: Clienti + Consulenze (Algolia lato server) + Documenti per contenuto.
  * Un solo popover che si chiude navigando (l'originale ne apriva uno nuovo a ogni ricerca).
  */
 function GlobalSearch() {
@@ -150,7 +151,7 @@ function GlobalSearch() {
   }, []);
 
   const go = (to) => { setOpen(false); setQ(''); navigate(to); };
-  const empty = res && !res.clienti.length && !res.consulenze.length;
+  const empty = res && !res.clienti.length && !res.consulenze.length && !res.documenti?.length;
 
   return (
     <div className="search-box" ref={box}>
@@ -158,7 +159,7 @@ function GlobalSearch() {
       <input
         ref={input}
         className="input"
-        placeholder="Cerca clienti e consulenze…"
+        placeholder="Cerca clienti, consulenze e documenti…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => { setFocused(true); if (res) setOpen(true); }}
@@ -190,6 +191,22 @@ function GlobalSearch() {
               {c.Data_Inizio && <span className="faint small">{c.Data_Inizio}</span>}
             </button>
           ))}
+          {res.documenti?.length > 0 && <div className="menu-heading">Documenti</div>}
+          {res.documenti?.map((d) => (
+            <button key={d.url} className="menu-item" onClick={() => go(`/documenti?q=${encodeURIComponent(q.trim())}`)} style={{ alignItems: 'flex-start' }}>
+              <span className="file-icon pdf" style={{ width: 28, height: 28, borderRadius: 8, flex: 'none' }}><FileSearch size={14} /></span>
+              <span className="grow" style={{ minWidth: 0 }}>
+                <span className="truncate" style={{ display: 'block' }}>{d.nome}</span>
+                {d.estratto && !d.simile && <span className="faint small truncate" style={{ display: 'block' }}><Highlight text={d.estratto} /></span>}
+              </span>
+            </button>
+          ))}
+          {!empty && (
+            <button className="menu-item" onClick={() => go(`/documenti?q=${encodeURIComponent(q.trim())}`)}>
+              <FileSearch size={15} />
+              <span className="grow">Cerca “{q.trim()}” nel testo di tutti i documenti</span>
+            </button>
+          )}
         </div>
       )}
     </div>

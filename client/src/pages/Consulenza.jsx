@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlarmClock, CalendarClock, CalendarDays, Download, FileText, FolderOpen, LayoutGrid, ListChecks,
@@ -23,7 +23,9 @@ export default function Consulenza() {
   const ref = `Consulenze/${id}`;
   const q = useDoc(ref);
   const me = useMe();
-  const [tab, setTab] = useState('panoramica');
+  const [params] = useSearchParams();
+  // ?tab=note: dalla ricerca documenti si arriva direttamente alla scheda
+  const [tab, setTab] = useState(params.get('tab') ?? 'panoramica');
   const edit = useDialog();
   const navigate = useNavigate();
   const { confirm, toast } = useFeedback();

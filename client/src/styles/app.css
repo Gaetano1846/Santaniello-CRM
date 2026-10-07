@@ -782,3 +782,17 @@ a.note-file:hover { background: var(--surface-hover); }
   .kv-value { overflow-wrap: anywhere; }
   .contact-line { overflow-wrap: anywhere; }
 }
+
+/* ricerca documenti per contenuto */
+.doc-results .doc-result { align-items: flex-start; padding: 12px; }
+.doc-results .doc-result + .doc-result { border-top: 1px solid var(--border); border-radius: 0; }
+.doc-result-name { display: block; font-weight: 600; color: var(--text); }
+.doc-snippet { margin: 4px 0 6px; font-size: 13px; line-height: 1.55; color: var(--text-2); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.doc-snippet mark, .menu-item mark { background: var(--amber-soft, #fdf0c8); color: var(--text); border-radius: 2px; padding: 0 1px; font-weight: 600; }
+.doc-context { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.doc-context .badge svg { flex: none; }
+.doc-context .badge { max-width: 260px; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
+.index-badge { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+.index-badge.err { color: var(--red); }
+.index-badge button { border: 0; background: none; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+@media (max-width: 760px) { .hide-sm { display: none; } }

@@ -10,6 +10,7 @@ import { requireAuth } from './services/auth.js';
 import { authRouter } from './routes/auth.js';
 import { dataRouter } from './routes/data.js';
 import { domainRouter } from './routes/domain.js';
+import { syncIndex } from './services/indexer.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -78,4 +79,8 @@ const where = db.kind === 'memory'
 app.listen(config.port, () => {
   console.log(`\n  ⚖  Santaniello CRM  →  http://localhost:${config.port}`);
   console.log(`     dati: ${db.kind}${where ? ` (${where})` : ''}\n`);
+  // documenti mai indicizzati (caricati prima della ricerca per contenuto) o rimasti in coda
+  syncIndex()
+    .then(({ added }) => added && console.log(`  indicizzazione di ${added} documenti avviata in background`))
+    .catch((e) => console.warn('Indicizzazione documenti non avviata:', e.message));
 });

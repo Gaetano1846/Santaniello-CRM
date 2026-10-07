@@ -4,6 +4,8 @@ import { getDb } from '../db/index.js';
 import { NOTE_COLLECTIONS } from '../db/schema.js';
 import { deleteStoredFile, uploadFile } from '../services/storage.js';
 import { searchCollection } from '../services/search.js';
+import { indexStatus, searchDocuments } from '../services/docsearch.js';
+import { indexAllegati, indexFiles, reindex, unindex } from '../services/indexer.js';
 import { calcolaAppuntamentiRecenti } from '../domain/appuntamenti.js';
 import {
   createEntityFolder, createSubfolder, deleteFolderRecursive, deleteSingleFile,
@@ -23,11 +25,34 @@ const refOf = (col, v) => {
 
 /* ------------------------------------------------------------ ricerca */
 
-/** Ricerca globale della AppBar: Clienti + Consulenze (porting di algoliaSearch*) */
+/** Ricerca globale della AppBar: Clienti + Consulenze (porting di algoliaSearch*) + Documenti per contenuto */
 domainRouter.get('/search', async (req, res) => {
   const q = String(req.query.q ?? '');
-  const [clienti, consulenze] = await Promise.all([searchCollection('Clienti', q), searchCollection('Consulenze', q)]);
-  res.json({ clienti, consulenze });
+  const [clienti, consulenze, documenti] = await Promise.all([
+    searchCollection('Clienti', q), searchCollection('Consulenze', q), searchDocuments(q, { limit: 5 }),
+  ]);
+  res.json({ clienti, consulenze, documenti: documenti.results });
+});
+
+/** Ricerca nei documenti per contenuto e nome; cliente="Clienti/id" limita a un cliente */
+domainRouter.get('/documenti/cerca', async (req, res) => {
+  res.json(await searchDocuments(String(req.query.q ?? ''), {
+    limit: req.query.limit,
+    cliente: refOf('Clienti', req.query.cliente),
+  }));
+});
+
+/** Stato dell'indicizzazione dei file indicati (?files=Files/a,Files/b) */
+domainRouter.get('/documenti/stato', async (req, res) => {
+  const ids = String(req.query.files ?? '').split(',').filter(Boolean).slice(0, 500).map((r) => refOf('Files', r).split('/')[1]);
+  res.json(await indexStatus(ids));
+});
+
+/** Rielabora un documento andato in errore */
+domainRouter.post('/documenti/reindex', async (req, res) => {
+  const url = String(req.body?.url ?? '');
+  if (!url) return res.status(400).json({ error: 'URL mancante' });
+  res.json({ ok: await reindex(url) });
 });
 
 /* ------------------------------------------------------------ cartelle */
@@ -106,6 +131,8 @@ domainRouter.post('/files', upload.array('files'), async (req, res) => {
       }
     }));
   }
+  // estrazione del testo in background: la risposta non aspetta l'indicizzazione
+  indexFiles(created).catch((e) => console.error('Indicizzazione non avviata', e.message));
   res.status(failed.length && !created.length ? 500 : 201).json({ created, failed });
 });
 
@@ -150,9 +177,11 @@ domainRouter.post('/note/:col/:id', upload.array('files'), async (req, res) => {
   const Titolo = String(req.body.titolo ?? '').trim();
   if (!Titolo) return res.status(400).json({ error: 'Il titolo è obbligatorio' });
   const Allegati = await uploadAllegati(req.files);
-  res.status(201).json(await db.add(col, {
+  const doc = await db.add(col, {
     Titolo, Descrizione: String(req.body.descrizione ?? ''), Data_Creazione: new Date(), Utente: req.user.ref, Allegati,
-  }));
+  });
+  indexAllegati(doc.path, Allegati).catch((e) => console.error('Indicizzazione non avviata', e.message));
+  res.status(201).json(doc);
 });
 
 /** Modifica: "mantieni" = URL degli allegati esistenti da conservare; gli altri vengono eliminati dallo storage */
@@ -169,7 +198,10 @@ domainRouter.patch('/note/:col/:id/:nota', upload.array('files'), async (req, re
   const doc = await db.update(p, {
     Titolo, Descrizione: String(req.body.descrizione ?? ''), Allegati: [...prev.filter((a) => keep.has(a.File)), ...nuovi],
   });
-  await Promise.all(prev.filter((a) => !keep.has(a.File)).map((a) => deleteStoredFile(a.File)));
+  const rimossi = prev.filter((a) => !keep.has(a.File));
+  await Promise.all(rimossi.map((a) => deleteStoredFile(a.File)));
+  await unindex(rimossi.map((a) => a.File));
+  indexAllegati(p, nuovi).catch((e) => console.error('Indicizzazione non avviata', e.message));
   res.json(doc);
 });
 
