@@ -11,18 +11,37 @@ export class ApiError extends Error {
 let onUnauthorized = () => {};
 export const setUnauthorizedHandler = (fn) => { onUnauthorized = fn; };
 
+const OFFLINE = 'Impossibile contattare il server. Controlla la connessione e riprova tra qualche istante.';
+
+/** Messaggio per gli errori senza spiegazione dal server (mai un codice nudo come "Errore 500") */
+function fallbackMessage(status) {
+  // 502–504, o 500 senza corpo: il server non risponde (spento, in riavvio, proxy senza backend)
+  if (status >= 500) return OFFLINE;
+  if (status === 401) return 'Sessione scaduta: accedi di nuovo.';
+  if (status === 403) return 'Non hai i permessi per questa operazione.';
+  if (status === 404) return 'Elemento non trovato.';
+  if (status === 413) return 'File troppo grande.';
+  if (status === 429) return 'Troppe richieste: riprova tra poco.';
+  return 'Operazione non riuscita. Riprova.';
+}
+
 export async function api(path, { method = 'GET', body, form } = {}) {
-  const res = await fetch(`/api${path}`, {
-    method,
-    credentials: 'same-origin',
-    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
-    body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
-  });
+  let res;
+  try {
+    res = await fetch(`/api${path}`, {
+      method,
+      credentials: 'same-origin',
+      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
+    });
+  } catch {
+    throw new ApiError(OFFLINE, 0);
+  }
   if (res.status === 204) return null;
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (res.status === 401 && !path.startsWith('/auth/')) onUnauthorized();
-    throw new ApiError(json.error ?? `Errore ${res.status}`, res.status);
+    throw new ApiError(json.error ?? fallbackMessage(res.status), res.status);
   }
   return json;
 }
