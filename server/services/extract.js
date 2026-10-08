@@ -137,6 +137,9 @@ async function getWorker() {
       langPath: path.join(path.dirname(ita.langPath), '4.0.0_best_int'),
       gzip: true,
       cacheMethod: 'none',
+      // senza handler tesseract.js rilancia l'errore di un'immagine illeggibile come eccezione
+      // non gestita e il server si chiude; così l'errore arriva solo come rifiuto di recognize()
+      errorHandler: () => {},
     });
   })();
   return workerPromise;

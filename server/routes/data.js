@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getDb } from '../db/index.js';
-import { schema, schemaFor } from '../db/schema.js';
+import { NOTE_COLLECTIONS, schema, schemaFor } from '../db/schema.js';
+import { unindex } from '../services/indexer.js';
+import { deleteStoredFile } from '../services/storage.js';
 
 /**
  * API dati generica "stile Firestore", equivalente alle query che l'app Flutter
@@ -100,6 +102,15 @@ dataRouter.patch('/doc/*path', async (req, res) => {
 dataRouter.delete('/doc/*path', async (req, res) => {
   const p = assertPath(segs(req), true);
   const db = await getDb();
+  // le note di cliente/consulenza/caso spariscono con il padre: i loro allegati vanno tolti dallo storage
+  // (PostgreSQL le elimina a cascata, Firestore e il database JSON no: si eliminano qui per tutti)
+  const [col] = p.split('/');
+  const notePath = Object.hasOwn(NOTE_COLLECTIONS, col) && p.split('/').length === 2 ? `${p}/${NOTE_COLLECTIONS[col]}` : null;
+  const note = notePath ? await db.query(notePath) : [];
+  if (note.length) await db.deleteCollection(notePath);
   await db.delete(p);
+  const allegati = note.flatMap((n) => n.Allegati ?? []).map((a) => a.File);
+  await Promise.all(allegati.map((url) => deleteStoredFile(url)));
+  await unindex(allegati);
   res.status(204).end();
 });

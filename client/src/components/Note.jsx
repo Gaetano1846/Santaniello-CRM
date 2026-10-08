@@ -115,7 +115,12 @@ function NotaDialog({ open, nota, parent, label, logLink, onClose }) {
     setFiles([]);
   }, [open, nota]);
 
-  const addFiles = (list) => setFiles((prev) => [...prev, ...Array.from(list ?? [])]);
+  const addFiles = (list) => {
+    // copia subito: la FileList dell'input viene svuotata sul posto da `value = ''`
+    // prima che React esegua l'updater, e i file scelti col pulsante andavano persi
+    const nuovi = Array.from(list ?? []);
+    if (nuovi.length) setFiles((prev) => [...prev, ...nuovi]);
+  };
 
   const save = useAction(async () => {
     const body = { titolo: f.Titolo.trim(), descrizione: f.Descrizione, files };

@@ -127,7 +127,7 @@ async function processNext() {
     set = e instanceof UnsupportedError
       ? { stato: 'non_supportato', errore: e.message, testo: null, ocr: false }
       : { stato: 'errore', errore: friendlyError(e), testo: null, ocr: false };
-    if (set.stato === 'errore') console.warn(`  indicizzazione fallita: ${doc.nome}: ${e.message}`);
+    if (set.stato === 'errore') console.warn(`  indicizzazione fallita: ${doc.nome}: ${e?.message ?? e}`);
   }
   // se nel frattempo il file è stato rimesso in coda (aggiornato è cambiato) la riga resta "in_attesa"
   await p.query(
@@ -139,8 +139,10 @@ async function processNext() {
 }
 
 function friendlyError(e) {
-  if (e.code === 'ENOENT') return 'File non trovato nello storage';
-  if (/central directory|zip file|not a valid|non è un PDF|Invalid PDF/i.test(e.message)) return 'File danneggiato o in un formato non leggibile';
-  if (/password/i.test(e.message)) return 'Documento protetto da password';
-  return e.message.slice(0, 300);
+  // tesseract.js rifiuta con una stringa, non con un Error
+  const msg = String(e?.message ?? e);
+  if (e?.code === 'ENOENT') return 'File non trovato nello storage';
+  if (/central directory|zip file|not a valid|non è un PDF|Invalid PDF|read image|no pix/i.test(msg)) return 'File danneggiato o in un formato non leggibile';
+  if (/password/i.test(msg)) return 'Documento protetto da password';
+  return msg.slice(0, 300);
 }

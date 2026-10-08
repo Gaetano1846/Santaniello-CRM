@@ -9,16 +9,18 @@
   },
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
-    "dev:server": "node --watch-path=server --env-file-if-exists=.env server/index.js",
+    "dev:server": "node --watch-path=server --import ./server/env.js server/index.js",
     "dev:client": "vite",
     "build": "vite build",
     "start": "node --env-file-if-exists=.env server/index.js",
     "seed": "node --env-file-if-exists=.env server/db/seed.js",
     "test": "node --test \"test/**/*.test.js\"",
+    "test:e2e": "node --test --test-concurrency=1 test/e2e/api.e2e.js",
     "db:import": "node --env-file-if-exists=.env server/db/import.js",
     "db:migrate": "node --env-file-if-exists=.env -e \"import('./server/db/index.js').then(m=>m.getDb()).then(d=>{console.log('Schema applicato ('+d.kind+')');return d.close?.()})\"",
     "docs:reindex": "node --env-file-if-exists=.env server/scripts/reindex.js",
-    "seed:documenti": "node --env-file-if-exists=.env server/scripts/seed-documenti.js"
+    "seed:documenti": "node --env-file-if-exists=.env server/scripts/seed-documenti.js",
+    "seed:demo": "node --env-file-if-exists=.env server/scripts/seed-demo.js"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.10",

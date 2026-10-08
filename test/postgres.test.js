@@ -169,6 +169,8 @@ test('postgres: ricerca dei documenti per contenuto (PDF, testo, OCR, note, erro
     await save('scansione.png', c.toBuffer('image/png'), sub.path),
     await save('rotto.pdf', Buffer.from('non sono un pdf'), sub.path),
     await save('archivio.zip', Buffer.from('PK'), sub.path),
+    // immagine illeggibile: prima mandava in crash il processo (errore non gestito di tesseract.js)
+    await save('foto_rotta.jpg', Buffer.from('non sono una foto'), sub.path),
   ];
   await indexFiles(files);
   // allegato di una nota della consulenza
@@ -182,6 +184,8 @@ test('postgres: ricerca dei documenti per contenuto (PDF, testo, OCR, note, erro
   assert.equal(st[files[2].path].ocr, true);
   assert.equal(st[files[3].path].stato, 'errore');
   assert.equal(st[files[4].path].stato, 'non_supportato');
+  assert.equal(st[files[5].path].stato, 'errore');
+  assert.equal(st[files[5].path].errore, 'File danneggiato o in un formato non leggibile');
 
   // plurale e senza accento trovano "contratto" e "morosita"; il contesto risale le cartelle
   let r = await searchDocuments('contratti morosità');
